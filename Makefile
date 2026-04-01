@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -std=c11 -Wall -Wextra -pedantic -Iinclude
-TARGET = groupX_manager
+TARGET = group29_manager
 SRC = src/main.c src/group29_manager.c
 BONUS_TARGET = group29_bonus
 BONUS_SRC = group29_bonus.c
