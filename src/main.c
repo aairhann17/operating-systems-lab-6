@@ -1,10 +1,12 @@
 #include <stdio.h>
-#include "lab6.h"
+#include "group29_manager.h"
 
-int main(void) {
-    printf("Operating Systems Lab 6 (C)\n");
-    printf("----------------------------\n\n");
+int main(int argc, char *argv[]) {
+    const char *backing_store_path = "BACKING_STORE.bin";
 
-    run_lab6_demo();
-    return 0;
+    if (argc >= 2) {
+        backing_store_path = argv[1];
+    }
+
+    return run_lab6(backing_store_path);
 }

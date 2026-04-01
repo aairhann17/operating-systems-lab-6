@@ -1,76 +1,99 @@
-# Operating Systems Lab 6 (C Starter)
+# Operating Systems Lab 6 (Virtual Memory Manager)
 
-This is a C project scaffold for an Operating Systems Lab 6 assignment using Banker's algorithm.
+This project targets the virtual-address translation lab format shown in your files:
+
+- Input: 32-bit logical addresses from standard input (`stdin`)
+- Output: one line per address in the exact style:
+	- `Virtual address: <v> Physical address: <p> Value: <value>`
 
 ## Project Structure
 
 - `src/main.c` - Program entry point
-- `src/lab6.c` - Banker's algorithm implementation (safe-state + request handling)
-- `include/lab6.h` - Function declarations
-- `Makefile` - Build and run shortcuts for `make`
+- `src/group29_manager.c` - Virtual memory translation logic using page table + backing store
+- `include/group29_manager.h` - Function declarations
+- `Makefile` - Builds required executable name `groupX_manager`
 - `build.ps1` - PowerShell build script for Windows
-- `tests/` - Sample input files and a simple shell test runner
 
 ## Build (GCC)
 
 ```powershell
-gcc -std=c11 -Wall -Wextra -pedantic -Iinclude src/main.c src/lab6.c -o lab6.exe
+gcc -std=c11 -Wall -Wextra -pedantic -Iinclude src/main.c src/group29_manager.c -o groupX_manager
 ```
 
-## Run
+## Run (Required Style)
 
-```powershell
-./lab6.exe
-```
-
-In WSL/Linux builds, if you compile to `lab6`:
+WSL/Linux:
 
 ```bash
-./lab6
+./groupX_manager < addresses.txt
 ```
 
-## Program Modes
-
-At runtime, the program supports:
-
-- Built-in example case (classic safe sequence)
-- Custom input case (enter process/resource counts and matrices)
-- One resource request simulation after the initial safety check
-
-The implementation includes both common Lab 6 tasks:
-
-- Safety algorithm (`is_safe_state`)
-- Resource-request algorithm (`request_resources`)
-
-## Build + Run with Make
-
-If you have `make` installed:
+PowerShell:
 
 ```powershell
-make
-make run
+Get-Content addresses.txt | .\groupX_manager.exe
 ```
 
-## Build + Run with PowerShell Script
+## Run (Custom Backing Store Path)
 
-```powershell
-./build.ps1
-./lab6.exe
-```
-
-## Run Sample Tests (WSL/Linux)
+If `BACKING_STORE.bin` is not in the working directory, pass it as the first argument.
 
 ```bash
-chmod +x tests/run_tests.sh
-./tests/run_tests.sh
+./groupX_manager /path/to/BACKING_STORE.bin < addresses.txt
 ```
-
-Sample input files:
-
-- `tests/safe_builtin.in`
-- `tests/unsafe_custom.in`
-- `tests/request_granted_builtin.in`
 
 ## Notes
 
-- If your instructor's exact Lab 6 format differs, you can keep the same core logic and only adjust input/output formatting in `src/lab6.c`.
+- The program masks every input number to the lower 16 bits before translation.
+- The implementation uses 256-byte pages, 256 logical pages, 16 TLB entries, and 256 physical frames.
+- Output is printed in `correct.txt` style:
+	- `Virtual address: <logical> Physical address: <physical> Value: <signed_byte>`
+- Final statistics are printed to three decimal places.
+
+## Build with Make
+
+```bash
+make
+```
+
+## Build with PowerShell Script
+
+```powershell
+./build.ps1
+```
+
+## Optional Bonus (128 Frames + FIFO Replacement)
+
+Build with Make:
+
+```bash
+make bonus
+```
+
+Build and run in one command:
+
+```bash
+make bonus-run
+```
+
+Override input and backing-store paths if needed:
+
+```bash
+make bonus-run ADDRESSES_FILE=/path/to/addresses.txt BACKING_STORE_FILE=/path/to/BACKING_STORE.bin
+```
+
+Compile:
+
+```bash
+gcc -std=c11 -Wall -Wextra -pedantic group29_bonus.c -o group29_bonus
+```
+
+Run with stdin addresses:
+
+```bash
+./group29_bonus /path/to/BACKING_STORE.bin < addresses.txt
+```
+
+The bonus program keeps the same per-address output format and adds:
+
+- `Page Replacements = <count>`

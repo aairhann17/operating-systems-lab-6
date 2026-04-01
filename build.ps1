@@ -6,5 +6,5 @@ if (-not $gcc) {
 }
 
 Write-Host "Compiling project..."
-gcc -std=c11 -Wall -Wextra -pedantic -Iinclude src/main.c src/lab6.c -o lab6.exe
-Write-Host "Build successful: lab6.exe"
+gcc -std=c11 -Wall -Wextra -pedantic -Iinclude src/main.c src/group29_manager.c -o groupX_manager.exe
+Write-Host "Build successful: groupX_manager.exe"
