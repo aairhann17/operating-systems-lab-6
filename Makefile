@@ -1,7 +1,7 @@
 CC = gcc
-CFLAGS = -std=c11 -Wall -Wextra -pedantic -Iinclude
+CFLAGS = -std=c11 -Wall -Wextra -pedantic
 TARGET = group29_manager
-SRC = src/main.c src/group29_manager.c
+SRC = main.c group29_manager.c
 BONUS_TARGET = group29_bonus
 BONUS_SRC = group29_bonus.c
 ADDRESSES_FILE ?= addresses.txt
@@ -18,7 +18,7 @@ $(TARGET): $(SRC)
 	$(CC) $(CFLAGS) $(SRC) -o $(TARGET)
 
 $(BONUS_TARGET): $(BONUS_SRC)
-	$(CC) -std=c11 -Wall -Wextra -pedantic $(BONUS_SRC) -o $(BONUS_TARGET)
+	$(CC) $(CFLAGS) $(BONUS_SRC) -o $(BONUS_TARGET)
 
 run: $(TARGET)
 	./$(TARGET)
