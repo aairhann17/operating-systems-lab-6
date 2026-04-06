@@ -3,12 +3,26 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+/*
+ * group29_bonus.c
+ * ---------------
+ * Bonus version of the lab.
+ *
+ * This implementation keeps the same address-translation pipeline as the main
+ * solution, but limits physical memory to 128 frames. Once those frames are
+ * full, pages are replaced using FIFO page replacement.
+ */
+
 #define PAGE_SIZE 256
 #define PAGE_COUNT 256
 #define TLB_SIZE 16
 #define FRAME_COUNT_BONUS 128
 #define PHYSICAL_MEMORY_SIZE_BONUS (FRAME_COUNT_BONUS * PAGE_SIZE)
 
+/*
+ * Search the TLB for the requested page.
+ * Returns the mapped frame number if found, otherwise -1.
+ */
 static int tlb_lookup(const int tlb_pages[TLB_SIZE],
                       const int tlb_frames[TLB_SIZE],
                       int page_number) {
@@ -20,6 +34,10 @@ static int tlb_lookup(const int tlb_pages[TLB_SIZE],
     return -1;
 }
 
+/*
+ * Remove any TLB entry that refers to a page being evicted from memory.
+ * This prevents stale TLB translations after page replacement.
+ */
 static void tlb_invalidate_page(int tlb_pages[TLB_SIZE],
                                 int tlb_frames[TLB_SIZE],
                                 int page_number) {
@@ -31,6 +49,9 @@ static void tlb_invalidate_page(int tlb_pages[TLB_SIZE],
     }
 }
 
+/*
+ * Insert or refresh a TLB entry using FIFO replacement when the TLB is full.
+ */
 static void tlb_insert(int tlb_pages[TLB_SIZE],
                        int tlb_frames[TLB_SIZE],
                        int *tlb_next_index,
@@ -49,6 +70,7 @@ static void tlb_insert(int tlb_pages[TLB_SIZE],
 }
 
 int main(int argc, char *argv[]) {
+    /* Use the default lab backing store unless a custom path is provided. */
     const char *backing_store_path = "BACKING_STORE.bin";
     if (argc >= 2) {
         backing_store_path = argv[1];
@@ -60,22 +82,34 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+    /* page_table[page] gives the current frame for that page, or -1 if absent. */
     int page_table[PAGE_COUNT];
+
+    /* frame_page[frame] tells us which page currently occupies each frame. */
     int frame_page[FRAME_COUNT_BONUS];
+
+    /* Physical memory is smaller in the bonus version: only 128 frames. */
     signed char physical_memory[PHYSICAL_MEMORY_SIZE_BONUS];
 
+    /* TLB state and FIFO replacement pointer. */
     int tlb_pages[TLB_SIZE];
     int tlb_frames[TLB_SIZE];
     int tlb_next_index = 0;
 
+    /*
+     * next_free_frame grows until all 128 frames are used.
+     * next_victim_frame then cycles through frames for FIFO eviction.
+     */
     int next_free_frame = 0;
     int next_victim_frame = 0;
 
+    /* Counters for required and bonus statistics. */
     int translated_count = 0;
     int page_fault_count = 0;
     int tlb_hit_count = 0;
     int replacement_count = 0;
 
+    /* Initialize tables to the empty state. */
     for (int i = 0; i < PAGE_COUNT; i++) {
         page_table[i] = -1;
     }
@@ -87,6 +121,7 @@ int main(int argc, char *argv[]) {
         tlb_frames[i] = -1;
     }
 
+    /* Read one logical address per line from standard input. */
     char line[128];
     while (fgets(line, sizeof(line), stdin) != NULL) {
         char *endptr = NULL;
@@ -95,24 +130,33 @@ int main(int argc, char *argv[]) {
             continue;
         }
 
+        /* Keep only the low 16 bits, then split into page number and offset. */
         int virtual_address = (int)(((uint32_t)logical_address_raw) & 0xFFFFu);
         int page_number = (virtual_address >> 8) & 0xFF;
         int offset = virtual_address & 0xFF;
 
+        /* Try to translate via the TLB first. */
         int frame_number = tlb_lookup(tlb_pages, tlb_frames, page_number);
         if (frame_number != -1) {
             tlb_hit_count++;
         } else {
+            /* If the TLB misses, consult the page table. */
             frame_number = page_table[page_number];
         }
 
+        /* If the page is not present, service a page fault. */
         if (frame_number == -1) {
             page_fault_count++;
 
+            /* Use a free frame until none remain. */
             if (next_free_frame < FRAME_COUNT_BONUS) {
                 frame_number = next_free_frame;
                 next_free_frame++;
             } else {
+                /*
+                 * Once memory is full, evict the oldest frame using FIFO page
+                 * replacement.
+                 */
                 frame_number = next_victim_frame;
                 next_victim_frame = (next_victim_frame + 1) % FRAME_COUNT_BONUS;
 
@@ -124,6 +168,7 @@ int main(int argc, char *argv[]) {
                 replacement_count++;
             }
 
+            /* Load the requested page from the backing store into the chosen frame. */
             long seek_position = (long)page_number * PAGE_SIZE;
             if (fseek(backing_store_file, seek_position, SEEK_SET) != 0) {
                 fprintf(stderr, "Error: failed to seek backing store for page %d\n", page_number);
@@ -141,13 +186,16 @@ int main(int argc, char *argv[]) {
                 return 1;
             }
 
+            /* Record the new mapping in both the page table and reverse map. */
             page_table[page_number] = frame_number;
             frame_page[frame_number] = page_number;
             tlb_insert(tlb_pages, tlb_frames, &tlb_next_index, page_number, frame_number);
         } else {
+            /* Keep the TLB updated even when the page-table lookup succeeds. */
             tlb_insert(tlb_pages, tlb_frames, &tlb_next_index, page_number, frame_number);
         }
 
+        /* Compute the final physical address and print the value stored there. */
         int physical_address = (frame_number * PAGE_SIZE) + offset;
         signed char value = physical_memory[physical_address];
 
@@ -158,6 +206,7 @@ int main(int argc, char *argv[]) {
         translated_count++;
     }
 
+    /* Print the standard statistics plus the number of page replacements. */
     if (translated_count > 0) {
         double page_fault_rate = (double)page_fault_count / (double)translated_count;
         double tlb_hit_rate = (double)tlb_hit_count / (double)translated_count;
