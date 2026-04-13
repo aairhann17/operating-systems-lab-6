@@ -29,6 +29,23 @@
 #define PHYSICAL_MEMORY_SIZE (FRAME_COUNT * PAGE_SIZE)
 #define TLB_SIZE 16
 
+/*
+ * main
+ * ----
+ * Program entry point. The lab input is read from standard input, and the
+ * backing-store file defaults to BACKING_STORE.bin unless a custom path is
+ * supplied as the first command-line argument.
+ */
+int main(int argc, char *argv[]) {
+    const char *backing_store_path = "BACKING_STORE.bin";
+
+    if (argc >= 2) {
+        backing_store_path = argv[1];
+    }
+
+    return run_lab6(backing_store_path);
+}
+
 int run_lab6(const char *backing_store_path) {
     /*
      * page_table[page] = frame number for that page, or -1 if the page has not

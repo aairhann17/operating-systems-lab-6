@@ -8,8 +8,7 @@ This project implements virtual-address translation with:
 
 ## Project Structure
 
-- `main.c` - Program entry point
-- `group29_manager.c` - Main virtual memory manager
+- `group29_manager.c` - Main virtual memory manager and program entry point
 - `group29_manager.h` - Header for main manager
 - `group29_bonus.c` - Bonus version (128 frames + FIFO replacement)
 - `Makefile` - Build and run targets

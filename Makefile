@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -std=c11 -Wall -Wextra -pedantic
 TARGET = group29_manager
-SRC = main.c group29_manager.c
+SRC = group29_manager.c
 BONUS_TARGET = group29_bonus
 BONUS_SRC = group29_bonus.c
 ADDRESSES_FILE ?= addresses.txt
